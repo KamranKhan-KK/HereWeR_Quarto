@@ -1,14 +1,29 @@
-# quarto-rladies-cologne
+# quarto- Here We R!
 
-Hello, Quarto: A World of Possibilities (for Reproducible Publishing) talk for R-Ladies Cologne
+Introduction to Quarto - Here We R, QMUL
 
 ## Setup notes
 
-- RStudio: Version 2023.09.0+463 (2023.09.0+463)
-- Quarto: 1.4.395
-- R: 4.3.1 (2023-06-16) -- "Beagle Scouts"
-- Packages: tidyverse, palmerpenguins, gt
+R version 4.4.1 (2024-06-14)
+Platform: aarch64-apple-darwin20
+Running under: macOS Sonoma 14.7.1
 
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/London
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_4.4.1    tools_4.4.1       rstudioapi_0.16.0
+> 
 ## Demo
 
 ### Documents
