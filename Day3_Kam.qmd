@@ -1,0 +1,377 @@
+---
+title: "Day3 - Here We R! - Regression using R"
+author: "Kamran Khan & Didjier Masangwi"
+institution: "PCTU Queen Mary University of London"
+date: today
+title-slide-attributes:
+  data-background-image: images/hello-quarto.png
+  data-background-size: stretch
+  data-background-opacity: "0.5"
+format:
+  revealjs:
+    transition: slide
+    echo: true
+    code-fold: true
+    background-transition: fade
+revealjs-plugins:
+  - drop
+editor: visual
+embed-resources: true
+---
+
+## Packages
+
+```{r}
+# List of required packages
+required_packages <- c("tidyverse", "survival", "survminer", 
+                       "ggplot2", "labelled", "gtsummary", "labelled", 
+                       "purrr", "here", "EnvStats", "rstatix")
+
+# Check and install missing packages
+install_if_missing <- function(packages) {
+  missing <- packages[!packages %in% installed.packages()[, "Package"]]
+  if (length(missing) > 0) {
+    install.packages(missing, dependencies = TRUE) # Include dependencies
+    message("Installed missing packages: ", paste(missing, collapse = ", "))
+  } else {
+    message("All required packages are already installed.")
+  }
+}
+
+# Run the function
+install_if_missing(required_packages)
+
+
+```
+
+## Loading the required libraries
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+
+
+library(tidyverse)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(gtsummary)
+library(labelled)
+library(purrr)
+library(here)
+library(EnvStats)
+library(rstatix)
+```
+
+## Create a clinical dataset
+
+```{r}
+set.seed(123)  # For reproducibility
+clinical_trial_data <- tibble(
+  patient_id = 1:150,
+  age = rnorm(150, mean = 50, sd = 12),  # Patient age
+  sex = sample(c("Male", "Female"), 150, replace = TRUE),  # Patient sex
+  treatment_group = sample(c("Control", "Treatment A", "Treatment B"), 150, replace = TRUE),  # Treatment groups
+  time_to_event = rexp(150, rate = 0.1),  # Time to event (survival data)
+  event_occurred = sample(c(0, 1), 150, replace = TRUE),  # Event status (0 = censored, 1 = event occurred)
+  baseline_score = rnorm(150, mean = 75, sd = 10),  # Baseline health score
+  followup_score = rnorm(150, mean = 80, sd = 10)  # Follow-up health score
+)
+
+#Inspect the data 
+
+glimpse(clinical_trial_data)
+```
+
+## Data Manipulation and Visualization with tidyverse
+
+```{r}
+clinical_trial_data <- clinical_trial_data |> 
+  mutate(Group = factor(treatment_group))
+
+glimpse(clinical_trial_data)
+```
+
+## Select specific columns
+
+```{r}
+# Select specific columns
+selected_data <- clinical_trial_data %>% 
+  select(patient_id, age, treatment_group, baseline_score, followup_score)
+
+
+head(selected_data)
+```
+
+## Filtering
+
+```{r}
+# Filter patients in the Treatment A group
+filtered_data <- clinical_trial_data %>% 
+  filter(treatment_group == "Treatment A")
+
+head(filtered_data)
+```
+
+## Mutate
+
+```{r}
+# Add a new variable for change in health score
+clinical_trial_data <- clinical_trial_data %>%
+  mutate(score_change = followup_score - baseline_score)
+
+ncol(clinical_trial_data)
+names(clinical_trial_data)
+```
+
+## Plotting with ggplot2
+
+```{r}
+# Boxplot of follow-up scores by treatment group
+ggplot(clinical_trial_data, aes(x = age, y = Group)) +
+  geom_point() +
+  labs(title = "Follow-up Scores by Treatment Group", x = "Treatment Group", y = "Follow-up Score")
+
+```
+
+# Statistics using R
+
+## T-test
+
+Two sample t-test (Student's t-test) can be used if we have two independent (unrelated) groups (e.g., males-females, treatment-non treatment) and one quantitative variable of interest.
+
+```{r}
+# Filter for Control and Treatment A groups
+t_test_data <- clinical_trial_data |> 
+  filter(treatment_group %in% c("Control", "Treatment A"))
+
+head(t_test_data)
+
+
+```
+
+## Perform t-test
+
+```{r}
+# Perform t-test
+t.test(followup_score ~ treatment_group, data = t_test_data)
+```
+
+## Presenting the results using gtsummary package
+
+```{r}
+
+
+t_test_reults <- t_test_data |>  
+  select(treatment_group,followup_score) |> 
+  tbl_summary(
+    by = treatment_group, 
+    statistic = followup_score ~ "{mean} ({sd})", 
+    label = list(followup_score ~ "Score"),
+    missing = c("no")) |>  
+    add_p(test = all_continuous() ~ "t.test") |> 
+    bold_labels() 
+ 
+t_test_reults
+
+  
+```
+
+We can now save the results as .docx format
+
+```{r}
+# save
+ t_test_reults |>
+   as_flex_table() |>
+   flextable::save_as_docx(
+     path = here::here("t_test_reults_tbl.docx")
+   )
+ 
+
+```
+
+## **Chi-sqaure test of independence**
+
+If we want to see whether there's an association between two categorical variables we can use the Pearson's chi-square test, often called chi-square test of independence.
+
+```{r}
+# Create contingency table for sex and treatment group
+contingency_table <- table(clinical_trial_data$sex, clinical_trial_data$treatment_group)
+
+# Perform chi-square test
+chisq.test(contingency_table)
+```
+
+## Using gtsummary()
+
+```{r}
+clinical_trial_data |>
+  select(treatment_group, sex) |> 
+  tbl_summary(by = treatment_group) |>
+  add_p() |> 
+  add_n()
+```
+
+## ANOVA
+
+The data in *dataDWL* dataset. In this example we explore the variations between weight loss according to four different types of diet. The question that may be asked is: does the average weight loss differ according to the diet?
+
+```{r}
+library(readxl)
+dataDWL <- read_excel("dataDWL.xlsx")
+
+dataDWL <- dataDWL %>% 
+  mutate(Diet = factor(Diet))
+glimpse(dataDWL)
+
+head(dataDWL)
+```
+
+## **Summary statistics**
+
+The `WeightLoss` summary statistics for each diet group are:
+
+```{r}
+
+DWL_summary <- dataDWL %>%
+  group_by(Diet) %>%
+  dplyr::summarise(
+    n = n(),
+    na = sum(is.na(WeightLoss)),
+    min = min(WeightLoss, na.rm = TRUE),
+    q1 = quantile(WeightLoss, 0.25, na.rm = TRUE),
+    median = quantile(WeightLoss, 0.5, na.rm = TRUE),
+    q3 = quantile(WeightLoss, 0.75, na.rm = TRUE),
+    max = max(WeightLoss, na.rm = TRUE),
+    mean = mean(WeightLoss, na.rm = TRUE),
+    sd = sd(WeightLoss, na.rm = TRUE),
+    skewness = EnvStats::skewness(WeightLoss, na.rm = TRUE),
+    kurtosis= EnvStats::kurtosis(WeightLoss, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+DWL_summary
+```
+
+## **Run the ANOVA test**
+
+We will perform an ANOVA to test the null hypothesis that the mean weight loss is the same for all the diet groups.
+
+```{r}
+# Compute the analysis of variance
+anova_one_way <- aov(WeightLoss ~ Diet, data = dataDWL)
+
+# Summary of the analysis
+summary(anova_one_way)
+```
+
+## Present the results using gtsummary
+
+```{r}
+gt_summ_ANOVA <- dataDWL %>% 
+  tbl_summary(
+    by = Diet, 
+    statistic = WeightLoss ~ "{mean} ({sd})", 
+    digits = list(everything() ~ 1), #number of decimal places (gtsummary)
+    label = list(WeightLoss ~ "Weight Loss (kg)"), 
+    missing = c("no")) |> 
+  add_p(test = WeightLoss ~ "aov") 
+
+gt_summ_ANOVA
+```
+
+## **Post-hoc tests**
+
+A significant one-way ANOVA is generally followed up by post-hoc tests to perform multiple pairwise comparisons between groups
+
+The output contains the following columns of interest:
+
+-   estimate: estimate of the difference between means of the two groups
+
+-   conf.low, conf.high: the lower and the upper end point of the confidence interval at 95% (default)
+
+-   p.adj: p-value after adjustment for the multiple comparisons.
+
+## Pairwise Comparison
+
+```{r}
+# Pairwise comparisons
+pwc_Tukey <- dataDWL %>% 
+  tukey_hsd(WeightLoss ~ Diet)
+
+pwc_Tukey 
+```
+
+## Explanation
+
+Pairwise comparisons were carried out using the method of Tukey and the adjusted p-values were calculated.The results in Tukey post hoc table show that the weight loss from diet C seems to be significantly larger than diet A (mean difference = 2.91 kg, 95%CI \[0.71, 5.16\], p=0.005 \<0.05) and diet B (mean difference = 3.21 kg, 95%CI \[0.98, 5.43\], p=0.002 \<0.05).
+
+## Regression Analysis in R
+
+#### Linear Regression
+
+```{r}
+# Fit a linear regression model for follow-up score
+linear_model <- lm(followup_score ~ baseline_score + age + treatment_group, data = clinical_trial_data)
+summary(linear_model)
+
+```
+
+## Using the `broom::tidy()`
+
+`function to get the results in a nice tibble`
+
+```{r}
+linear_model |> broom::tidy()
+```
+
+## Using gtsummary() function tbl_regression()
+
+```{r}
+# tidy(linear_model)
+tbl_regression(linear_model) |> 
+  bold_labels() |> 
+  bold_p(t = 0.05)
+```
+
+## Logistic Regression
+
+```{r}
+# Fit logistic regression to predict event occurrence
+logistic_model <- glm(event_occurred ~ age + sex + treatment_group, data = clinical_trial_data, family = binomial)
+summary(logistic_model)
+```
+
+## Using gtsummary, function tbl_regression()
+
+```{r}
+gt_summ_logReg <- tbl_regression(logistic_model, exponentiate = TRUE)
+gt_summ_logReg
+```
+
+## Save as word output for sharing
+
+```{r}
+# save
+ gt_summ_logReg |>
+   as_flex_table() |>
+   flextable::save_as_docx(
+     path = here::here("ligisticReg_tbl.docx")
+   )
+ 
+```
+
+Resources:
+
+R for Data Science Book
+
+<https://argoshare.is.ed.ac.uk/healthyr_book/>
+
+gtsummary website
+
+<https://www.danieldsjoberg.com/gtsummary/>
+
+R medicine conference Gtsummary webinar
+
+<https://www.youtube.com/watch?v=p-diyV2E77o>

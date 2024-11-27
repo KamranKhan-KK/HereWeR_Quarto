@@ -1,0 +1,46 @@
+---
+title: "Session 4 Quarto"
+description: Showing some features of Quarto!
+date: today
+author: 
+  - name: "Kamran Khan"
+    url: https://www.linkedin.com/in/kamran-khan-msc-ph-d-54ab4662/
+    affiliation: PCTU 
+    affiliation-url:
+title-block-banner: true
+title-block-banner-color: "purple"
+format: 
+  html:
+   theme: flatly
+code-fold: true
+toc: true
+number-sections: true
+embed-resources: true
+editor: visual
+---
+
+# Preparation
+
+We know that ....
+
+> penguins are cute!
+
+... so we will work with some `penguins` data today.
+
+::: callout-note
+Note we have now the `palmerpenguin` data as an alternative to the famous `iris` data.
+:::
+
+For more information on the penguins data visit Allison Horst's Github page <https://allisonhorst.github.io/palmerpenguins/>
+
+:::{.callout-caution collapse="true"}
+
+## Expand to learn more about where the data was collected.
+
+Data was collected and made available by Dr. Kristen Gorman and the palmer station, Antartica LTER, a member of the Long Term Ecological Research Network.
+
+:::
+
+## Choosing the data
+
+### Analysis

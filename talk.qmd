@@ -11,10 +11,13 @@ format:
   revealjs:
     transition: slide
     background-transition: fade
+revealjs-plugins:
+  - drop
 editor: visual
+embed-resources: true
 ---
 
-# What is Quarto? Intro
+# What is Quarto? 
 
 ## Quarto ...
 
@@ -58,7 +61,7 @@ editor: visual
 
 ## Let's see Quarto in action {.center}
 
-<https://github.com/mine-cetinkaya-rundel/quarto-rladies-cologne>
+<https://github.com/KamranKhan-KK/HereWeR_Quarto>
 
 # Parting remarks
 
